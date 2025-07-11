@@ -82,6 +82,7 @@
    :local-tx {:db/index true}
    :graph-uuid {:db/index true}
    :aes-key-jwk {:db/index true}
+   :migration-datoms {:db/index true}
 
    ;; device
    :device/uuid {:db/unique :db.unique/identity}
@@ -480,3 +481,10 @@
                                (d/datoms @conn :avet :block/uuid))
                        (map (fn [datom] [:db/retractEntity (:e datom)])))]
       (d/transact! conn tx-data))))
+
+(defn add-migration-datoms!
+  [repo from-version to-version datoms]
+  (when-let [conn (worker-state/get-client-ops-conn repo)]
+    (d/transact! conn [{:migration-datoms {:datoms datoms
+                                           :from from-version
+                                           :to to-version}}])))
